@@ -16,47 +16,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tools = new Tools(root);
   const gallery = new Gallery(root);
 
-  /** Погрузка картинок */
+  /** Загрузка картинок */
   async function loadImg(photos) {
-    try {
-      loader.show();
-      gallery.clear();
+    loader.show();
+    gallery.clear();
 
+    const promisesLoadImg: any[] = [];
 
-      const promisesLoadImg: any[] = [];
+    photos.forEach(({file: fileUrl, name}) => {
+      promisesLoadImg.push(
+        new Promise((res) => {
+          gallery
+            .addImg(fileUrl, name)
+            .querySelector('img')
+            .addEventListener('load', () => res(true));
+        })
+      );
+    });
 
-      photos.forEach(({file: fileUrl, name}) => {
-        promisesLoadImg.push(
-          new Promise((res) => {
-            gallery
-              .addImg(fileUrl, name)
-              .querySelector('img')
-              .addEventListener('load', () => res(true));
-          })
-        );
-      });
+    /** Ждем пока загрузятся все картинки */
+    const promises = await Promise.all(promisesLoadImg);
+    const imgLoaded = promises.reduce((prev, item): boolean | undefined => item === prev, true);
 
-      /** Ждем пока загрузятся все картинки */
-      const promises = await Promise.all(promisesLoadImg);
-      const imgLoaded = promises.reduce((prev, item): boolean | undefined => item === prev, true);
-
-      imgLoaded && loader.hide();
-    } catch (e) {
-      alert(`Произошла ошибка, перезагрузите страницу: ${e}`);
-    }
+    imgLoaded && loader.hide();
   }
 
-  const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`);
-  loadImg(photos);
+  try {
+    const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`);
+    loadImg(photos);
+  } catch (err) {
+    alert(`Произошла ошибка, перезагрузите страницу: ${err}`);
+  }
 
   /** Биндим события с троттлингом */
   function bindClickWithThrottle(el) {
     fromEvent(el, 'click')
       .pipe(throttle( () => interval(1000)))
-      .subscribe(async (e: any) => {
-        const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`, {sort: ParamsSort[e.target.dataset.sort]});
-        loadImg(photos);
-      });
+      .subscribe(
+        async (e: any) => {
+          try {
+            const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`, {sort: ParamsSort[e.target.dataset.sort]});
+            loadImg(photos);
+          } catch (err) {
+            alert(`Произошла ошибка, перезагрузите страницу. ${err}`);
+          }
+        });
+
   }
 
   /**
