@@ -1,15 +1,17 @@
-import dom from '@core/Dom/Dom.js';
+import dom from '../../core/Dom/Dom';
 import './Galery.scss';
-import Events from '@core/Events/Evets';
+import Events from '../../core/Events/Evets';
 
 export default class Gallery extends Events {
+  readonly parent: any;
+  readonly el: any;
 
   constructor(parent) {
     super();
     this.parent = parent;
     this.el = this.init();
 
-    this._bind();
+    this.bind();
   }
 
 
@@ -20,7 +22,7 @@ export default class Gallery extends Events {
     return gallery;
   }
 
-  addImg(url, name) {
+  addImg(url: string, name: string) {
     const img = dom().create('img');
     img.src = url;
 
@@ -33,24 +35,26 @@ export default class Gallery extends Events {
     imgWrap.append(img);
 
     this.el.append(imgWrap);
+
+    return imgWrap;
   }
 
-  _bind() {
-    super.addEvent(document, 'click', (e) => this._toggleNotificationImg(e));
+   private bind() {
+    super.addEvent(document, 'click', (e) => this.toggleNotificationImg(e));
   }
 
-  _toggleNotificationImg(e) {
+   private toggleNotificationImg(e) {
     const imgWrap = e.target.closest('.Gallery__img');
-    this._closeAllNotifications(imgWrap);
+    this.closeAllNotifications(imgWrap);
 
     if (!imgWrap) {
       return
-    };
+    }
 
     imgWrap.classList.toggle('active');
   }
 
-  _closeAllNotifications(notClearEl) {
+  private closeAllNotifications(notClearEl) {
     this.el.querySelectorAll('.Gallery__img').forEach(item => {
       item !== notClearEl && item.classList.remove('active');
     });

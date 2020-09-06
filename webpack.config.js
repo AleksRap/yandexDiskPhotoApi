@@ -114,7 +114,7 @@ module.exports = {
   context: path.resolve(__dirname, 'src'),                          // Контекст для всех урлов в настройках
   mode: 'development',                                              // Режим сборки 'development' и 'production'
   entry: {                                                          // Точки входа
-    main: ['@babel/polyfill', './index.js'],
+    main: ['@babel/polyfill', './index.ts'],
   },
   output: {                                                         // Выгрузка бандла
     filename: filename('js'),                                   // Имена файлов

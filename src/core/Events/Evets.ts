@@ -1,5 +1,5 @@
 export default class Events {
-  events = [];
+  events: any[] = [];
 
   /**
    * На входе принимаем объект с параметрами
@@ -7,8 +7,8 @@ export default class Events {
    * event - событие (str)
    * fn    - функция без вызова
    */
-  addEvent(el, event, fn) {
-    this.events.push(el, event, fn);
+  addEvent(el, event: string, fn): boolean {
+    this.events.push({el, event, fn});
 
     /** Вешаем слушатель */
     el.addEventListener(event, fn);
@@ -16,7 +16,7 @@ export default class Events {
     return true;
   }
 
-  removeEvents() {
+  removeEvents(): boolean {
     /** Снимаем обработчики события */
     this.events.forEach(item => {
       item.el.removeEventListener(item.event, item.fn)

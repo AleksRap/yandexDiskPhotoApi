@@ -1,9 +1,9 @@
 class Dom {
 
-  create(tag, classes = [], style = '') {
-    const el = document.createElement(tag);
+  create(tag: string, classes: string[] = [], style?: string) {
+    const el: any = document.createElement(tag);
 
-    classes.forEach(className => {
+    classes.forEach((className: string): void => {
       el.classList.add(className);
     });
 
