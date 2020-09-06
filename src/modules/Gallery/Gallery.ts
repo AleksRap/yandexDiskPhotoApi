@@ -1,6 +1,6 @@
 import dom from '../../core/Dom/Dom';
 import './Galery.scss';
-import Events from '../../core/Events/Evets';
+import Events from '../../core/Events/Events';
 
 export default class Gallery extends Events {
   readonly parent: any;
@@ -39,7 +39,11 @@ export default class Gallery extends Events {
     return imgWrap;
   }
 
-   private bind() {
+  clear() {
+    this.el.innerHTML = '';
+  }
+
+  private bind() {
     super.addEvent(document, 'click', (e) => this.toggleNotificationImg(e));
   }
 

@@ -1,40 +1,68 @@
 import "./styles/_index.scss";
-import YandexDiskApi from "./modules/YandexDiskApi/YandexDiskApi";
+import YandexDiskApi, {ParamsSort} from "./modules/YandexDiskApi/YandexDiskApi";
 import Gallery from "./modules/Gallery/Gallery";
 import Loader from './modules/Loader/Loader';
+import Tools from "./modules/Tools/Tools";
+import {fromEvent, interval} from "rxjs";
+import {throttle} from "rxjs/operators";
 
 document.addEventListener('DOMContentLoaded', async () => {
   const root = document.getElementById('root');
 
-  const loader = new Loader(root);
-  loader.show();
-
   /**
    * Получаем данные из yandex disk api
    */
-  try {
-    const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`);
-    const gallery = new Gallery(root);
-    const promisesLoadImg: any[] = [];
+  const loader = new Loader(root);
+  const tools = new Tools(root);
+  const gallery = new Gallery(root);
 
-    photos.forEach(({file: fileUrl, name}) => {
-      promisesLoadImg.push(
-        new Promise((res) => {
-          gallery
-            .addImg(fileUrl, name)
-            .querySelector('img')
-            .addEventListener('load', () => res(true));
-        })
-      );
-    });
+  /** Погрузка картинок */
+  async function loadImg(photos) {
+    try {
+      loader.show();
+      gallery.clear();
 
-    /** Ждем пока загрузятся все картинки */
-    const promises = await Promise.all(promisesLoadImg);
-    const imgLoaded = promises.reduce((prev, item): boolean | undefined => item === prev, true);
 
-    imgLoaded && loader.hide();
-  } catch (e) {
-    alert(`Произошла ошибка, перезагрузите страницу: ${e}`);
+      const promisesLoadImg: any[] = [];
+
+      photos.forEach(({file: fileUrl, name}) => {
+        promisesLoadImg.push(
+          new Promise((res) => {
+            gallery
+              .addImg(fileUrl, name)
+              .querySelector('img')
+              .addEventListener('load', () => res(true));
+          })
+        );
+      });
+
+      /** Ждем пока загрузятся все картинки */
+      const promises = await Promise.all(promisesLoadImg);
+      const imgLoaded = promises.reduce((prev, item): boolean | undefined => item === prev, true);
+
+      imgLoaded && loader.hide();
+    } catch (e) {
+      alert(`Произошла ошибка, перезагрузите страницу: ${e}`);
+    }
   }
 
+  const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`);
+  loadImg(photos);
+
+  /** Биндим события с троттлингом */
+  function bindClickWithThrottle(el) {
+    fromEvent(el, 'click')
+      .pipe(throttle( () => interval(1000)))
+      .subscribe(async (e: any) => {
+        const photos = await YandexDiskApi.getPhotos(`v1/disk/public/resources?public_key=https://yadi.sk/d/TlN0aHs33Ag_dA?w=1`, {sort: ParamsSort[e.target.dataset.sort]});
+        loadImg(photos);
+      });
+  }
+
+  /**
+   * Изменение сортировки полученных картинок
+   * фронтовую сортировку не делаем т.к на сервере картинок больше чем приходит за один запрос
+   */
+  bindClickWithThrottle(tools.btnSortName);
+  bindClickWithThrottle(tools.btnSortSize);
 });
